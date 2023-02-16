@@ -1,0 +1,168 @@
+# Default values for kaskada.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  repository: ghcr.io/kaskada/kaskada
+  # Overrides the image tag whose default is v{{ .Chart.AppVersion }}
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+# labels to apply to all resources
+commonLabels: {}
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # Labels to add to the service account
+  labels: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# these settings will be applied to all pods: canary, manager, or compute
+shared:
+  affinity: {}
+  podLabels: {}
+  nodeSelector: {}
+  podAnnotations: {}
+  tolerations: []
+
+# these settings are only applied to the canary pod, if enabled.
+canary:
+  # If this is true, a single pod deployment is created, with all required services running in the single pod.
+  enabled: false
+  affinity: {}
+  podLabels: {}
+  nodeSelector: {}
+  podAnnotations: {}
+  tolerations: []
+  
+  managerResources:
+    limits:
+      cpu: 250m
+      memory: 250Mi
+    requests:
+      cpu: 100m
+      memory: 100Mi
+  computeResources:
+    limits:
+      cpu: 2
+      memory: 8Gi
+    requests:
+      cpu: 500m
+      memory: 2Gi
+
+# these settings are only applied to compute pods
+compute:
+  affinity: {}
+  podLabels: {}
+  nodeSelector: {}
+  podAnnotations: {}
+  tolerations: []
+  resources:
+    limits:
+      cpu: 4
+      memory: 16Gi
+    requests:
+      cpu: 1
+      memory: 8Gi
+  replicas: 3
+
+# these settings are only applied to manager pods
+manager:
+  affinity: {}
+  podLabels: {}
+  nodeSelector: {}
+  podAnnotations: {}
+  tolerations: []
+  resources:
+    limits:
+      cpu: 500m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 250Mi
+  replicas: 3
+
+podSecurityContext:
+  fsGroup: 65534
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+# Defaults to `ClusterFirst`.
+# Valid values are: `ClusterFirstWithHostNet`, `ClusterFirst`, `Default` or `None`.
+dnsPolicy:
+
+priorityClassName: ""
+
+terminationGracePeriodSeconds:
+
+
+env: []
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 2
+  successThreshold: 1
+
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+
+service:
+  grpcPort: 50051
+  restPort: 8080
+  annotations: {}
+
+extraVolumes: []
+
+extraVolumeMounts: []
+
+resources: {}
+
+tempVolume:
+
+topologySpreadConstraints: []
+
+logLevel: info
+logFormat: json
+
+
+extraArgs: []
+
+secretConfiguration:
+  enabled: false
+  mountPath: ""
+  subPath: ""
+  data: {}
+    # credentials: |
+    #   [default]
+    #   aws_access_key_id = $SECRET_ACCESS_KEY
+    #   aws_secret_access_key = $SECRET_ACCESS_KEY
+
+deploymentStrategy:
+  type: Recreate
