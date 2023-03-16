@@ -1,0 +1,9 @@
+# -- Image pull secrets for Docker images
+imagePullSecrets:
+  - name: regcred
+
+service:
+  type: LoadBalancer
+
+image:
+  pullPolicy: Always

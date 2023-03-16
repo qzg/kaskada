@@ -1,25 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "kaskada.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  name: {{ include "kaskada-canary.fullname" . }}
+  namespace: {{ include "kaskada-canary.namespaceName" . }}
   labels:
-    {{- include "kaskada.labels" . | nindent 4 }}
-  {{- with .Values.deploymentAnnotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- include "kaskada-canary.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "kaskada.selectorLabels" . | nindent 6 }}
+      {{- include "kaskada-canary.selectorLabels" . | nindent 6 }}
   strategy:
     {{- toYaml .Values.deploymentStrategy | nindent 4 }}
   template:
     metadata:
       labels:
-        {{- include "kaskada.selectorLabels" . | nindent 8 }}
+        {{- include "kaskada-canary.selectorLabels" . | nindent 8 }}
       {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -33,73 +29,24 @@ spec:
         {{- end }}
       {{- end }}
     spec:
+      serviceAccountName: {{ include "kaskada-canary.serviceAccountName" . }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "kaskada.serviceAccountName" . }}
-      {{- with .Values.shareProcessNamespace }}
-      shareProcessNamespace: {{ . }}
-      {{- end }}
-      {{- with .Values.podSecurityContext }}
-      securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.priorityClassName }}
-      priorityClassName: {{ . | quote }}
-      {{- end }}
-      {{- with .Values.terminationGracePeriodSeconds }}
-      terminationGracePeriodSeconds: {{ . }}
-      {{- end }}
-      {{- with .Values.dnsPolicy }}
-      dnsPolicy: {{ . }}
-      {{- end }}
       containers:
-        - name: kaskada
-          {{- with .Values.securityContext }}
-          securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          image: {{ include "kaskada.image" . }}
+        - name: engine
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{- with .Values.env }}
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          args:
-            - --log-level={{ .Values.logLevel }}
-            - --log-format={{ .Values.logFormat }}
-            - --interval={{ .Values.interval }}
-            {{- if .Values.triggerLoopOnEvent }}
-            - --events
-            {{- end }}
-            {{- range .Values.sources }}
-            - --source={{ . }}
-            {{- end }}
-            - --policy={{ .Values.policy }}
-            - --registry={{ .Values.registry }}
-            {{- if eq .Values.registry "txt" }}
-            {{- if .Values.txtOwnerId }}
-            - --txt-owner-id={{ .Values.txtOwnerId }}
-            {{- end }}
-            {{- if .Values.txtPrefix }}
-            - --txt-prefix={{ .Values.txtPrefix }}
-            {{- end }}
-            {{- if and (eq .Values.txtPrefix "") (ne .Values.txtSuffix "") }}
-            - --txt-suffix={{ .Values.txtSuffix }}
-            {{- end }}
-            {{- end }}
-            {{- range .Values.domainFilters }}
-            - --domain-filter={{ . }}
-            {{- end }}
-            - --provider={{ tpl .Values.provider $ }}
-          {{- range .Values.extraArgs }}
-            - {{ tpl . $ }}
-          {{- end }}
+          command: ["/bin/sparrow-main", "serve"]
           ports:
-            - name: http
+            - name: grpc
               protocol: TCP
-              containerPort: 7979
+              containerPort: 50052
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:
@@ -117,7 +64,30 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- end }}
-          {{- with .Values.resources }}
+          {{- with .Values.engineResources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        - name: manager
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command: [ "/bin/wren" ]
+          ports:
+            - name: grpc
+              protocol: TCP
+              containerPort: 50051
+            - name: rest
+              protocol: TCP
+              containerPort: 3365
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          {{- with .Values.managerResources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}

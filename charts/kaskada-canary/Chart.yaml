@@ -1,5 +1,5 @@
 apiVersion: v2
-name: kaskada
+name: kaskada-canary
 description: Kaskada is a query engine for event-based (timestamped) data.
 type: application
 version: 0.0.1

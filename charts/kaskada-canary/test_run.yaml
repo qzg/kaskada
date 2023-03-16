@@ -1,0 +1,189 @@
+NAME: kas
+LAST DEPLOYED: Thu Mar 16 21:15:16 2023
+NAMESPACE: default
+STATUS: pending-install
+REVISION: 1
+TEST SUITE: None
+USER-SUPPLIED VALUES:
+imagePullSecrets:
+- name: regcred
+service:
+  type: LoadBalancer
+
+COMPUTED VALUES:
+affinity: {}
+commonLabels: {}
+deploymentStrategy:
+  type: Recreate
+engineResources:
+  limits:
+    cpu: 2
+    memory: 8Gi
+  requests:
+    cpu: 500m
+    memory: 2Gi
+extraEnv: []
+extraEnvFrom: []
+extraVolumeMounts: []
+extraVolumes: []
+fullnameOverride: ""
+image:
+  pullPolicy: Always
+  repository: ghcr.io/kaskada-ai/engine
+  tag: v0.4.1
+imagePullSecrets:
+- name: regcred
+logFormat: json
+logLevel: info
+managerResources:
+  limits:
+    cpu: 250m
+    memory: 250Mi
+  requests:
+    cpu: 100m
+    memory: 100Mi
+nameOverride: ""
+namespace:
+  name: null
+nodeSelector: {}
+podAnnotations: {}
+podLabels: {}
+resources: {}
+revisionHistoryLimit: 10
+secretConfiguration:
+  data: {}
+  enabled: false
+  mountPath: ""
+  subPath: ""
+service:
+  annotations: {}
+  appProtocol: ""
+  enabled: true
+  grpcPort: 50051
+  labels: {}
+  restPort: 3365
+  type: LoadBalancer
+serviceAccount:
+  annotations: {}
+  automountServiceAccountToken: true
+  create: true
+  imagePullSecrets: []
+  name: null
+tolerations: []
+
+HOOKS:
+MANIFEST:
+---
+# Source: kaskada-canary/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kas-kaskada-canary
+  namespace: default
+  labels:
+    helm.sh/chart: kaskada-canary-0.0.1
+    app.kubernetes.io/name: kaskada-canary
+    app.kubernetes.io/instance: kas
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+automountServiceAccountToken: true
+---
+# Source: kaskada-canary/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: kas-kaskada-canary
+  namespace: default
+  labels:
+    helm.sh/chart: kaskada-canary-0.0.1
+    app.kubernetes.io/name: kaskada-canary
+    app.kubernetes.io/instance: kas
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: LoadBalancer
+  ports:
+    - name: grpc
+      port: 50051
+      targetPort: 50051
+      protocol: TCP
+    - name: rest
+      port: 3365
+      targetPort: 3365
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: kaskada-canary
+    app.kubernetes.io/instance: kas
+---
+# Source: kaskada-canary/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kas-kaskada-canary
+  namespace: default
+  labels:
+    helm.sh/chart: kaskada-canary-0.0.1
+    app.kubernetes.io/name: kaskada-canary
+    app.kubernetes.io/instance: kas
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kaskada-canary
+      app.kubernetes.io/instance: kas
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kaskada-canary
+        app.kubernetes.io/instance: kas
+    spec:
+      serviceAccountName: kas-kaskada-canary
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: engine
+          image: "ghcr.io/kaskada-ai/engine:v0.4.1"
+          imagePullPolicy: Always
+          command: ["/bin/sparrow-main", "serve"]
+          ports:
+            - name: grpc
+              protocol: TCP
+              containerPort: 50052
+          livenessProbe:
+            null
+          readinessProbe:
+            null
+          resources:
+            limits:
+              cpu: 2
+              memory: 8Gi
+            requests:
+              cpu: 500m
+              memory: 2Gi
+        - name: manager
+          image: "ghcr.io/kaskada-ai/engine:v0.4.1"
+          imagePullPolicy: Always
+          command: [ "/bin/wren" ]
+          ports:
+            - name: grpc
+              protocol: TCP
+              containerPort: 50051
+            - name: rest
+              protocol: TCP
+              containerPort: 3365
+          livenessProbe:
+            null
+          readinessProbe:
+            null
+          resources:
+            limits:
+              cpu: 250m
+              memory: 250Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+
