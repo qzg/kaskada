@@ -53,8 +53,8 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{/*
 Create the name of the namespace
 */}}
-{{- define "kaskada-canary.namespaceName" -}}
-{{- default .Release.Namespace .Values.namespace.name }}
+{{- define "kaskada-canary.namespace" -}}
+{{- default .Release.Namespace .Values.namespace }}
 {{- end }}
 
 {{/*

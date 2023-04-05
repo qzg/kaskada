@@ -33,7 +33,7 @@ The following table lists the configurable parameters of the _Kaskada-Canary_ ch
 | logging.format | string | `json` | The logging format for all containers in the pod. Either `json` or `console`. |
 | logging.level | string | `info` | The logging level for all containers in the pod. Either `info` or `debug`. Note that sensitive information may exist in logs if the `debug` level is used. |
 | nameOverride | string | `""` | Overrides the chart's name. |
-| namespace.name | string | `nil` | The name of the Namespace to deploy If not set, `.Release.Namespace` is used. |
+| namespace | string | `nil` | The name of the Namespace to deploy into. If not set, `.Release.Namespace` is used. |
 | nodeSelector | object | `{}` | Node selector for the pod. |
 | podAnnotations | object | `{}` | Annotations to add to the pod. |
 | podLabels | object | `{}` | Labels to add to the pod. |

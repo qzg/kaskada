@@ -8,10 +8,9 @@ nameOverride: ""
 # -- Overrides the chart's computed fullname
 fullnameOverride: ""
 
-namespace:
-  # -- The name of the Namespace to deploy
+  # -- The name of the Namespace to deploy into.
   # If not set, `.Release.Namespace` is used
-  name: null
+namespace: null
 
 # -- Labels to apply to all resources
 commonLabels: {}

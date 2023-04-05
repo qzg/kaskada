@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "kaskada-canary.fullname" . }}
-  namespace: {{ include "kaskada-canary.namespaceName" . }}
+  namespace: {{ include "kaskada-canary.namespace" . }}
   labels:
     {{- include "kaskada-canary.labels" . | nindent 4 }}
 spec:
