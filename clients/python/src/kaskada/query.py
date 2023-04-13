@@ -10,6 +10,7 @@ from google.protobuf.message import Message
 import kaskada.formatters
 import kaskada.kaskada.v1alpha.destinations_pb2 as destinations_pb
 import kaskada.kaskada.v1alpha.query_service_pb2 as query_pb
+import kaskada.kaskada.v1alpha.common_pb2 as common_pb
 from kaskada.client import KASKADA_DEFAULT_SLICE, Client, get_client
 from kaskada.slice_filters import SliceFilter
 from kaskada.utils import get_timestamp, handleException, handleGrpcError
@@ -98,7 +99,7 @@ def create_query(
     slice_filter: Optional[SliceFilter] = None,
     experimental: bool = False,
     client: Optional[Client] = None,
-) -> query_pb.CreateQueryResponse:
+) -> Optional[query_pb.CreateQueryResponse]:
     """
     Performs a query
 
@@ -164,7 +165,9 @@ def create_query(
             query_request["result_behavior"] = "RESULT_BEHAVIOR_ALL_RESULTS"
 
         destination_args = {"file_type": response_as.name}
-        destination = destinations_pb.ObjectStoreDestination(**destination_args)
+        destination = destinations_pb.ObjectStoreDestination(
+            file_type=common_pb.FileType.Value(response_as.name)
+        )
         query_request["destination"] = {"object_store": destination}
 
         if slice_filter is not None:
@@ -180,8 +183,10 @@ def create_query(
         return execute_create_query(request, client)
     except grpc.RpcError as exec:
         handleGrpcError(exec)
+        return None
     except Exception as exec:
         handleException(exec)
+        return None
 
 
 def execute_create_query(
@@ -247,7 +252,7 @@ def list_queries(search: Optional[str] = None, client: Optional[Client] = None):
     try:
         client = get_client(client)
         req = query_pb.ListQueriesRequest(
-            search=search,
+            search=search if (search is not None) else "",
         )
         logger.debug(f"List Query Request: {req}")
         return client.query_stub.ListQueries(req, metadata=client.get_metadata())

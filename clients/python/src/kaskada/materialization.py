@@ -143,9 +143,9 @@ def create_materialization(
     expression: str,
     destination: Destination,
     views: List[MaterializationView],
-    slice_filter: SliceFilter = None,
-    client: Client = None,
-) -> material_pb.CreateMaterializationResponse:
+    slice_filter: Optional[SliceFilter] = None,
+    client: Optional[Client] = None,
+) -> Optional[material_pb.CreateMaterializationResponse]:
     try:
         slice_request = None
         if slice_filter is not None:
@@ -178,13 +178,15 @@ def create_materialization(
         )
     except grpc.RpcError as e:
         handleGrpcError(e)
+        return None
     except Exception as e:
         handleException(e)
+        return None
 
 
 def delete_materialization(
-    name: str, client: Client = None
-) -> material_pb.DeleteMaterializationResponse:
+    name: str, client: Optional[Client] = None
+) -> Optional[material_pb.DeleteMaterializationResponse]:
     try:
         client = get_client(client)
         req = material_pb.DeleteMaterializationRequest(materialization_name=name)
@@ -194,13 +196,15 @@ def delete_materialization(
         )
     except grpc.RpcError as e:
         handleGrpcError(e)
+        return None
     except Exception as e:
         handleException(e)
+        return None
 
 
 def get_materialization(
-    name: str, client: Client = None
-) -> material_pb.GetMaterializationResponse:
+    name: str, client: Optional[Client] = None
+) -> Optional[material_pb.GetMaterializationResponse]:
     try:
         client = get_client(client)
         req = material_pb.GetMaterializationRequest(materialization_name=name)
@@ -210,17 +214,19 @@ def get_materialization(
         )
     except grpc.RpcError as e:
         handleGrpcError(e)
+        return None
     except Exception as e:
         handleException(e)
+        return None
 
 
 def list_materializations(
-    search: Optional[str] = None, client: Client = None
-) -> material_pb.ListMaterializationsResponse:
+    search: Optional[str] = None, client: Optional[Client] = None
+) -> Optional[material_pb.ListMaterializationsResponse]:
     try:
         client = get_client(client)
         req = material_pb.ListMaterializationsRequest(
-            search=search,
+            search=search if (search is not None) else "",
         )
         logger.debug(f"List Materialization Request: {req}")
         return client.materialization_stub.ListMaterializations(
@@ -228,8 +234,10 @@ def list_materializations(
         )
     except grpc.RpcError as e:
         handleGrpcError(e)
+        return None
     except Exception as e:
         handleException(e)
+        return None
 
 
 def to_with_views(views: List[MaterializationView]) -> List[material_pb.WithView]:

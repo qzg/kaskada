@@ -36,7 +36,7 @@ def get_view_name(
 
 def list_views(
     search: Optional[str] = None, client: Optional[Client] = None
-) -> view_pb.ListViewsResponse:
+) -> Optional[view_pb.ListViewsResponse]:
     """
     Lists all the views the user has access to
 
@@ -51,20 +51,22 @@ def list_views(
     try:
         client = get_client(client)
         req = view_pb.ListViewsRequest(
-            search=search,
+            search=search if (search is not None) else "",
         )
         logger.debug(f"List Views Request: {req}")
         return client.view_stub.ListViews(req, metadata=client.get_metadata())
     except grpc.RpcError as e:
         handleGrpcError(e)
+        return None
     except Exception as e:
         handleException(e)
+        return None
 
 
 def get_view(
     view: Union[view_pb.View, view_pb.CreateViewResponse, view_pb.GetViewResponse, str],
     client: Optional[Client] = None,
-) -> view_pb.GetViewResponse:
+) -> Optional[view_pb.GetViewResponse]:
     """
     Gets a view by name
 
@@ -84,13 +86,15 @@ def get_view(
         return client.view_stub.GetView(req, metadata=client.get_metadata())
     except grpc.RpcError as e:
         handleGrpcError(e)
+        return None
     except Exception as e:
         handleException(e)
+        return None
 
 
 def create_view(
     view_name: str, expression: str, client: Optional[Client] = None
-) -> view_pb.CreateViewResponse:
+) -> Optional[view_pb.CreateViewResponse]:
     """
     Creates a view with a name and expression
 
@@ -112,15 +116,17 @@ def create_view(
         return client.view_stub.CreateView(req, metadata=client.get_metadata())
     except grpc.RpcError as e:
         handleGrpcError(e)
+        return None
     except Exception as e:
         handleException(e)
+        return None
 
 
 def delete_view(
     view: Union[view_pb.View, view_pb.CreateViewResponse, view_pb.GetViewResponse, str],
     client: Optional[Client] = None,
     force: bool = False,
-) -> view_pb.DeleteViewResponse:
+) -> Optional[view_pb.DeleteViewResponse]:
     """
     Deletes a view
 
@@ -140,5 +146,7 @@ def delete_view(
         return client.view_stub.DeleteView(req, metadata=client.get_metadata())
     except grpc.RpcError as e:
         handleGrpcError(e)
+        return None
     except Exception as e:
         handleException(e)
+        return None

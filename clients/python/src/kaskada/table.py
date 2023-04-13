@@ -74,7 +74,7 @@ def get_table_name(
 
 def list_tables(
     search: Optional[str] = None, client: Optional[Client] = None
-) -> table_pb.ListTablesResponse:
+) -> Optional[table_pb.ListTablesResponse]:
     """
     Lists all tables the user has access to
 
@@ -88,14 +88,16 @@ def list_tables(
     try:
         client = get_client(client)
         req = table_pb.ListTablesRequest(
-            search=search,
+            search=search if (search is not None) else "",
         )
         logger.debug(f"List Tables Request: {req}")
         return client.table_stub.ListTables(req, metadata=client.get_metadata())
     except grpc.RpcError as e:
         handleGrpcError(e)
+        return None
     except Exception as e:
         handleException(e)
+        return None
 
 
 def get_table(
@@ -103,7 +105,7 @@ def get_table(
         table_pb.Table, table_pb.CreateTableResponse, table_pb.GetTableResponse, str
     ],
     client: Optional[Client] = None,
-) -> table_pb.GetTableResponse:
+) -> Optional[table_pb.GetTableResponse]:
     """
     Gets a table by name
 
@@ -122,8 +124,10 @@ def get_table(
         return client.table_stub.GetTable(req, metadata=client.get_metadata())
     except grpc.RpcError as e:
         handleGrpcError(e)
+        return None
     except Exception as e:
         handleException(e)
+        return None
 
 
 def create_table(
@@ -134,7 +138,7 @@ def create_table(
     grouping_id: Optional[str] = None,
     source: Optional[TableSource] = None,
     client: Optional[Client] = None,
-) -> table_pb.CreateTableResponse:
+) -> Optional[table_pb.CreateTableResponse]:
     """
     Creates a table
 
@@ -192,8 +196,10 @@ def create_table(
         return client.table_stub.CreateTable(req, metadata=client.get_metadata())
     except grpc.RpcError as e:
         handleGrpcError(e)
+        return None
     except Exception as e:
         handleException(e)
+        return None
 
 
 def delete_table(
@@ -202,7 +208,7 @@ def delete_table(
     ],
     client: Optional[Client] = None,
     force: bool = False,
-) -> table_pb.DeleteTableResponse:
+) -> Optional[table_pb.DeleteTableResponse]:
     """
     Deletes a table referenced by name
 
@@ -222,15 +228,17 @@ def delete_table(
         return client.table_stub.DeleteTable(req, metadata=client.get_metadata())
     except grpc.RpcError as e:
         handleGrpcError(e)
+        return None
     except Exception as e:
         handleException(e)
+        return None
 
 
 def load(
     table_name: str,
     file: str,
     client: Optional[Client] = None,
-) -> table_pb.LoadDataResponse:
+) -> Optional[table_pb.LoadDataResponse]:
     """Loads a local file to a table. The type of file is inferred from the extension.
 
     Args:
@@ -256,7 +264,7 @@ def load(
             )
 
         input = common_pb.FileInput(
-            file_type=file_type,
+            file_type=common_pb.FileType.Value(file_type),
             uri=to_uri(file),
         )
         req = table_pb.LoadDataRequest(table_name=table_name, file_input=input)
@@ -264,8 +272,10 @@ def load(
         return client.table_stub.LoadData(req, metadata=client.get_metadata())
     except grpc.RpcError as e:
         handleGrpcError(e)
+        return None
     except Exception as e:
         handleException(e)
+        return None
 
 
 def load_dataframe(
@@ -273,7 +283,7 @@ def load_dataframe(
     dataframe: pd.DataFrame,
     client: Optional[Client] = None,
     engine: str = "pyarrow",
-) -> table_pb.LoadDataResponse:
+) -> Optional[table_pb.LoadDataResponse]:
     """
     Loads a dataframe to a table.
 
