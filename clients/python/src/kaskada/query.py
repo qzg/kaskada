@@ -178,7 +178,9 @@ def create_query(
             query_options["stream_metrics"] = True
 
         request_args = {"query": query_request, "query_options": query_options}
-        request = query_pb.CreateQueryRequest(**request_args)
+        q = query_pb.Query()
+        q.expression = expression
+        request = query_pb.CreateQueryRequest(q)
         logger.debug(f"Query Request: {request}")
         return execute_create_query(request, client)
     except grpc.RpcError as exec:
